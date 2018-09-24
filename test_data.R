@@ -12,15 +12,21 @@ org.df <- dataRetrieval::readNWISdata(service = "iv",
 
 gage.df <- org.df
 gage.df <- dplyr::mutate(gage.df,
-                         datetime = lubridate::with_tz(dateTime, tzone = "EST5EDT"))
+                         datetime = lubridate::with_tz(dateTime,
+                                                       tzone = "EST5EDT")) %>% 
+  rename(flow = X_00060_00000)
+  
 
-test <- complete_datetime(gage.df, "datetime") %>% 
-  mutate(datetime = lubridate::round_date(datetime, "day"),
-         day = lubridate::yday(datetime)) %>% 
-  group_by(datetime, day) %>% 
-  summarize(flow = median(X_00060_00000, na.rm = TRUE)) %>% 
-  ungroup()
+roll.df <- roll_daily_median(gage.df, datetime, flow, k = 50)
+quant.df <- quant_smooth(roll.df, flow, day, smooth.span = 0.01)
+curr.df <- roll.df %>% 
+  filter(datetime >= as.Date("2017-01-01")) %>% 
+  mutate(year = lubridate::year(datetime))
 
 
-ggplot(test, aes(datetime, X_00060_00000)) +
-  geom_line()
+gg_quant(quant.df, day, flow, col.pal = "RdBu") +
+  geom_line(data = curr.df, aes(day, flow), na.rm = TRUE)
+  
+
+plotly::ggplotly(my.plot)
+
