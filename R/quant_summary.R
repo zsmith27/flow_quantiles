@@ -17,7 +17,8 @@
 #' @rdname quant_summary
 #' @export 
 #' @importFrom rlang enquo quos
-#' @importFrom dplyr group_by summarize ungroup %>% 
+#' @importFrom dplyr group_by summarize ungroup quo_name %>% 
+#' @importFrom tidyr gather
 
 quant_summary <- function(df, value.col, ...) {
   value.col <- rlang::enquo(value.col)
@@ -36,7 +37,10 @@ quant_summary <- function(df, value.col, ...) {
       quant_95 = quantile(x = !!value.col, probs = 0.95, na.rm = TRUE),
       quant_100 = quantile(x = !!value.col, probs = 1.00, na.rm = TRUE)
     ) %>% 
-    dplyr::ungroup()
+    dplyr::ungroup() %>% 
+    tidyr::gather(quant,
+                  !!dplyr::quo_name(value.col),
+                  quant_00:quant_100)
   
   return(final.df)
 }
