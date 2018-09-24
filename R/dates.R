@@ -1,4 +1,4 @@
-#' @title FUNCTION_TITLE
+#' @title Datetiem Data Frame
 #' @description FUNCTION_DESCRIPTION
 #' @param start.date PARAM_DESCRIPTION
 #' @param end.date PARAM_DESCRIPTION
@@ -21,7 +21,7 @@ datetime_df <- function(start.date, end.date, seq.by = "hour", tz = "EST") {
   data.frame(datetime = seq.POSIXt(start.date, end.date, by = seq.by, tz = tz))
 }
 
-#' @title FUNCTION_TITLE
+#' @title Complete Datetime
 #' @description FUNCTION_DESCRIPTION
 #' @param df PARAM_DESCRIPTION
 #' @param datetime.col PARAM_DESCRIPTION
@@ -36,17 +36,24 @@ datetime_df <- function(start.date, end.date, seq.by = "hour", tz = "EST") {
 #'  }
 #' }
 #' @seealso 
-#'  \code{\link[dplyr]{join}}
+#'  \code{\link[rlang]{quotation}}
+#'  \code{\link[dplyr]{tidyeval}},\code{\link[dplyr]{join}}
 #' @rdname complete_datetime
 #' @export 
-#' @importFrom dplyr full_join %>% 
+#' @importFrom rlang enquo
+#' @importFrom dplyr quo_name full_join %>% 
 
 complete_datetime <- function(df, datetime.col, seq.by = "hour", tz = "EST5EDT") {
-  datetime_df(start.date = min(df[, datetime.col]), 
-              end.date = max(df[, datetime.col]),
+  datetime.col <- rlang::enquo(datetime.col)
+  
+  min.scl <- min(df[, dplyr::quo_name(datetime.col)], na.rm = TRUE)
+  max.scl <- max(df[, dplyr::quo_name(datetime.col)], na.rm = TRUE)
+  
+  datetime_df(start.date = min.scl, 
+              end.date = max.scl,
               seq.by,
               tz) %>% 
-  dplyr::full_join(df, by = datetime.col)
+  dplyr::full_join(df, by = dplyr::quo_name(datetime.col))
 }
 
 
